@@ -6,6 +6,8 @@ import com.projectsky.synthetichumancorestarter.audit.aop.KafkaAuditAspect;
 import com.projectsky.synthetichumancorestarter.command.model.Command;
 import com.projectsky.synthetichumancorestarter.command.service.CommandExecutor;
 import com.projectsky.synthetichumancorestarter.command.service.CommandService;
+import com.projectsky.synthetichumancorestarter.metrics.CommandMetricsPublisher;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -35,7 +37,7 @@ public class SyntheticHumanAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public BlockingQueue<Command> commandQueue(){
-        return new LinkedBlockingDeque<>(properties.getCommand().getQueueCapacity());
+        return new LinkedBlockingQueue<>(properties.getCommand().getQueueCapacity());
     }
 
     @Bean
@@ -52,8 +54,8 @@ public class SyntheticHumanAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public CommandExecutor commandExecutor(){
-        return new CommandExecutor();
+    public CommandExecutor commandExecutor(CommandMetricsPublisher commandMetricsPublisher){
+        return new CommandExecutor(commandMetricsPublisher);
     }
 
     @Bean
@@ -104,5 +106,13 @@ public class SyntheticHumanAutoConfiguration {
     @ConditionalOnProperty(prefix = "synthetic.human.audit", name = "mode", havingValue = "console")
     public ConsoleAuditAspect consoleAuditAspect(){
         return new ConsoleAuditAspect();
+    }
+
+    //
+
+    @Bean
+    @ConditionalOnMissingBean
+    public CommandMetricsPublisher commandMetricsPublisher(BlockingQueue<Command> queue, MeterRegistry meterRegistry){
+        return new CommandMetricsPublisher(queue, meterRegistry);
     }
 }
