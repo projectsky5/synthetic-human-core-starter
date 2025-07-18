@@ -6,10 +6,12 @@ import com.projectsky.synthetichumancorestarter.audit.aop.KafkaAuditAspect;
 import com.projectsky.synthetichumancorestarter.command.model.Command;
 import com.projectsky.synthetichumancorestarter.command.service.CommandExecutor;
 import com.projectsky.synthetichumancorestarter.command.service.CommandService;
+import com.projectsky.synthetichumancorestarter.exception.SyntheticExceptionHandler;
 import com.projectsky.synthetichumancorestarter.metrics.CommandMetricsPublisher;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -18,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -114,5 +117,14 @@ public class SyntheticHumanAutoConfiguration {
     @ConditionalOnMissingBean
     public CommandMetricsPublisher commandMetricsPublisher(BlockingQueue<Command> queue, MeterRegistry meterRegistry){
         return new CommandMetricsPublisher(queue, meterRegistry);
+    }
+
+    //
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnClass(RestControllerAdvice.class)
+    public SyntheticExceptionHandler syntheticExceptionHandler(){
+        return new SyntheticExceptionHandler();
     }
 }

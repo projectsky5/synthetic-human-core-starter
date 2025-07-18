@@ -2,6 +2,7 @@ package com.projectsky.synthetichumancorestarter.command.service;
 
 import com.projectsky.synthetichumancorestarter.command.enums.Priority;
 import com.projectsky.synthetichumancorestarter.command.model.Command;
+import com.projectsky.synthetichumancorestarter.exception.exceptions.QueueOverflowException;
 import lombok.RequiredArgsConstructor;
 
 import java.util.concurrent.ExecutorService;
@@ -21,7 +22,7 @@ public class CommandService {
                 try{
                     executorService.submit(() -> executor.execute(command));
                 } catch (RejectedExecutionException e) {
-                    throw new IllegalStateException("Очередь задач переполнена", e);
+                    throw new QueueOverflowException();
                 }
 
             }
