@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
@@ -14,9 +12,7 @@ import java.util.Arrays;
 * */
 
 @Aspect
-@Component
 @Slf4j
-@ConditionalOnProperty(prefix = "audit", name = "mode", havingValue = "console", matchIfMissing = true)
 public class ConsoleAuditAspect {
 
     /**

@@ -7,23 +7,16 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
-@Component
 @Aspect
 @Slf4j
-@ConditionalOnProperty(prefix = "audit", name = "mode", havingValue = "kafka")
 @RequiredArgsConstructor
 public class KafkaAuditAspect {
 
     private final AuditKafkaProducer auditKafkaProducer;
-
-    @Value("${audit.topic:audit-topic}")
-    private String topic;
+    private final String topic;
 
     /**
      * @param joinPoint - Точка входа в рантайме, позволяющая управлять выполнением метода
