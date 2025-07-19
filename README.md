@@ -3,6 +3,7 @@
 ---
 
 Задание: Реализовать собственный spring-boot-starter
+
 Демонстрационный проект: https://github.com/projectsky5/bishop-prototype
 
 ---
