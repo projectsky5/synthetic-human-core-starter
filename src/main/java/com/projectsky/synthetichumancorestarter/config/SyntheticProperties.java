@@ -1,9 +1,7 @@
 package com.projectsky.synthetichumancorestarter.config;
 
-import com.projectsky.synthetichumancorestarter.audit.enums.AuditMode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
@@ -11,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "synthetic.human.core")
 public class SyntheticProperties {
 
-    private boolean enabled = true;
+    private boolean enabled;
 
     private CommandProperties command = new CommandProperties();
     private AuditProperties audit = new AuditProperties();
@@ -33,7 +31,7 @@ public class SyntheticProperties {
         /**
          * keep-alive thread live time (seconds)
          * */
-        private Long keepAliveSeconds = 60L;
+        private int keepAliveSeconds = 60;
     }
 
     @Data
@@ -43,27 +41,17 @@ public class SyntheticProperties {
          * @code {console} - logging into console
          * @code {kafka} - send info in topic
          * */
-        private AuditMode mode = AuditMode.CONSOLE;
+        private String mode;
         /**
          * setting kafka topic for sending audit
          * */
-        private String topic = "audit-topic";
+
         private KafkaProperties kafka = new KafkaProperties();
     }
 
     @Data
     public static class KafkaProperties {
-        /**
-         * bootstrap servers for kafka
-         * */
-        private String bootstrapServers = "localhost:9092";
-        /**
-         * acknowledge value in kafka
-         * 0 - at most once
-         * 1 - at least once
-         * all - at least once on all replicas
-         * */
-        private String acks = "1";
+        private String topic = "audit-topic";
     }
 
 }

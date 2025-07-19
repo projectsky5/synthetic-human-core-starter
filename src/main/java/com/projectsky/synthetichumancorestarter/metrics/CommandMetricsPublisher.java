@@ -1,6 +1,5 @@
 package com.projectsky.synthetichumancorestarter.metrics;
 
-import com.projectsky.synthetichumancorestarter.command.model.Command;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -13,7 +12,7 @@ public class CommandMetricsPublisher {
     private final Map<String, Counter> authorCounts = new ConcurrentHashMap<>();
     private final MeterRegistry registry;
 
-    public CommandMetricsPublisher(BlockingQueue<Command> queue, MeterRegistry registry) {
+    public CommandMetricsPublisher(BlockingQueue<Runnable> queue, MeterRegistry registry) {
         this.registry = registry;
 
         registry.gauge("synthetic.command.queue.size", queue, BlockingQueue::size);

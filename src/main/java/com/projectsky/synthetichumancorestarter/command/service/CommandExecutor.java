@@ -12,6 +12,11 @@ public class CommandExecutor {
     private final CommandMetricsPublisher metricsPublisher;
 
     public void execute(Command command) {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         String author = command.getAuthor();
 
         log.info("Информация о команде: Описание={}, Приоритет={}, Автор={}, Время назначения={}",

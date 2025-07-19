@@ -11,6 +11,7 @@
     <groupId>com.projectsky</groupId>
     <artifactId>synthetic-human-core-starter</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>synthetic-human-core-starter</name>
     <description>synthetic-human-core-starter</description>
     <url/>
@@ -94,10 +95,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
         </plugins>
     </build>
 

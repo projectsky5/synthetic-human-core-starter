@@ -9,14 +9,17 @@ import com.projectsky.synthetichumancorestarter.command.service.CommandService;
 import com.projectsky.synthetichumancorestarter.exception.SyntheticExceptionHandler;
 import com.projectsky.synthetichumancorestarter.metrics.CommandMetricsPublisher;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -32,20 +35,22 @@ import java.util.concurrent.*;
 public class SyntheticHumanAutoConfiguration {
 
     private final SyntheticProperties properties;
+    private final KafkaProperties kafkaProperties;
 
-    public SyntheticHumanAutoConfiguration(SyntheticProperties properties) {
+    public SyntheticHumanAutoConfiguration(SyntheticProperties properties, KafkaProperties kafkaProperties) {
         this.properties = properties;
+        this.kafkaProperties = kafkaProperties;
     }
 
+    /* COMMAND MODULE */
+
     @Bean
-    @ConditionalOnMissingBean
-    public BlockingQueue<Command> commandQueue(){
+    public BlockingQueue<Runnable> commandQueue(SyntheticProperties properties) {
         return new LinkedBlockingQueue<>(properties.getCommand().getQueueCapacity());
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    public ExecutorService commandExecutorService(BlockingQueue<Runnable> queue){
+    public ExecutorService commandExecutorService(SyntheticProperties properties, BlockingQueue<Runnable> queue){
         return new ThreadPoolExecutor(
                 properties.getCommand().getCorePoolSize(),
                 properties.getCommand().getMaxPoolSize(),
@@ -56,75 +61,48 @@ public class SyntheticHumanAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
     public CommandExecutor commandExecutor(CommandMetricsPublisher commandMetricsPublisher){
         return new CommandExecutor(commandMetricsPublisher);
     }
 
     @Bean
-    @ConditionalOnMissingBean
     public CommandService commandService(ExecutorService executorService, CommandExecutor executor){
         return new CommandService(executorService, executor);
     }
 
-    //
+    /* AUDIT MODULE */
 
     @Bean
-    @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "synthetic.human.audit", name = "mode", havingValue = "kafka")
-    public KafkaTemplate<String, String> kafkaTemplate(){
-        Map<String, Object> props = new HashMap<>();
-        props.put(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                properties.getAudit().getKafka().getBootstrapServers());
-        props.put(
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                StringSerializer.class);
-        props.put(
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                StringSerializer.class);
-        props.put(
-                ProducerConfig.ACKS_CONFIG,
-                properties.getAudit().getKafka().getAcks());
+    public KafkaTemplate<String, String> kafkaTemplate() {
+        Map<String, Object> props = new HashMap<>(kafkaProperties.buildProducerProperties());
+
         ProducerFactory<String, String> factory = new DefaultKafkaProducerFactory<>(props);
         return new KafkaTemplate<>(factory);
     }
 
     @Bean
-    @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "synthetic.human.audit", name = "mode", havingValue = "kafka")
     public AuditKafkaProducer auditKafkaProducer(KafkaTemplate<String, String> kafkaTemplate){
         return new AuditKafkaProducer(kafkaTemplate);
     }
 
     @Bean
-    @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "synthetic.human.audit", name = "mode", havingValue = "kafka")
     public KafkaAuditAspect kafkaAuditAspect(AuditKafkaProducer producer){
-        return new KafkaAuditAspect(producer, properties.getAudit().getTopic());
+        return new KafkaAuditAspect(producer, properties.getAudit().getKafka().getTopic());
     }
 
     @Bean
-    @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "synthetic.human.audit", name = "mode", havingValue = "console")
     public ConsoleAuditAspect consoleAuditAspect(){
         return new ConsoleAuditAspect();
     }
 
-    //
+    /* METRICS MODULE */
 
     @Bean
-    @ConditionalOnMissingBean
-    public CommandMetricsPublisher commandMetricsPublisher(BlockingQueue<Command> queue, MeterRegistry meterRegistry){
+    public CommandMetricsPublisher commandMetricsPublisher(BlockingQueue<Runnable> queue, MeterRegistry meterRegistry){
         return new CommandMetricsPublisher(queue, meterRegistry);
-    }
-
-    //
-
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnClass(RestControllerAdvice.class)
-    public SyntheticExceptionHandler syntheticExceptionHandler(){
-        return new SyntheticExceptionHandler();
     }
 }
